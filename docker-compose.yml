@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: nysc_postgres
+    environment:
+      POSTGRES_DB: nysc_db
+      POSTGRES_USER: nysc_user
+      POSTGRES_PASSWORD: nysc_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+
+  redis:
+    image: redis:7-alpine
+    container_name: nysc_redis
+    ports:
+      - "6380:6379"
+
+  web:
+    build: .
+    container_name: nysc_web
+    command: sh -c "python3 manage.py migrate && python3 manage.py setup_user && python3 manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=django-insecure-nysc-ppa-workspace-key-change-in-prod
+      - DATABASE_URL=postgres://nysc_user:nysc_password@db:5432/nysc_db
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+
+  worker:
+    build: .
+    container_name: nysc_worker
+    command: celery -A nysc_workspace worker --loglevel=info
+    volumes:
+      - .:/app
+    environment:
+      - DEBUG=True
+      - DATABASE_URL=postgres://nysc_user:nysc_password@db:5432/nysc_db
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+
+volumes:
+  postgres_data:

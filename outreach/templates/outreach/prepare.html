@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Draft Outreach — {{ org.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+  <!-- Header -->
+  <div class="bg-paper border border-border p-6 rounded-xl shadow-sm flex items-center justify-between">
+    <div>
+      <div class="text-xs font-mono text-burgundy-700 font-bold uppercase tracking-wider">AI Outreach Assistant</div>
+      <h1 class="font-serif font-bold text-2xl text-ink-900 mt-0.5">Prepare Outreach for {{ org.name }}</h1>
+      <p class="text-xs text-ink-500 font-mono mt-1">Drafting in authentic Nigerian professional English based on your profile & evidence.</p>
+    </div>
+    <a href="{% url 'organizations:detail' pk=org.pk %}" class="text-xs text-ink-500 hover:text-ink-900 font-mono">&larr; Back to Workspace</a>
+  </div>
+
+  <!-- Outreach Form -->
+  <form method="POST" class="bg-white border border-border p-6 rounded-xl shadow-sm space-y-5" x-data="{ subject: '{{ draft_subject|escapejs }}', message: '{{ draft_message|escapejs }}' }">
+    {% csrf_token %}
+
+    <!-- Contact Selector -->
+    <div>
+      <label class="block text-xs font-mono font-medium text-ink-700 uppercase tracking-wider mb-1">Recipient Contact</label>
+      <select name="contact_id" onchange="window.location.href='?contact_id=' + this.value" class="w-full px-3 py-2 text-sm bg-paper border border-border rounded font-sans focus:outline-none focus:border-burgundy-700">
+        {% for c in contacts %}
+        <option value="{{ c.pk }}" {% if selected_contact and selected_contact.pk == c.pk %}selected{% endif %}>
+          {{ c.name }} ({% if c.email %}{{ c.email }}{% else %}No Email{% endif %}) - {{ c.role }}
+        </option>
+        {% empty %}
+        <option value="">General Careers / HR Desk ({{ org.general_email|default:"careers@org.com" }})</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Subject Line -->
+    <div>
+      <label class="block text-xs font-mono font-medium text-ink-700 uppercase tracking-wider mb-1">Subject Line</label>
+      <input type="text" name="subject" x-model="subject" required class="w-full px-3 py-2 text-sm bg-paper border border-border rounded font-sans focus:outline-none focus:border-burgundy-700">
+    </div>
+
+    <!-- Message Body -->
+    <div>
+      <div class="flex items-center justify-between mb-1">
+        <label class="block text-xs font-mono font-medium text-ink-700 uppercase tracking-wider">Message Content</label>
+        <button type="button" @click="navigator.clipboard.writeText(message); alert('Message copied to clipboard!')" class="text-xs font-mono text-burgundy-700 hover:underline">
+          Copy Message Text
+        </button>
+      </div>
+      <textarea name="message" x-model="message" rows="10" required class="w-full px-3.5 py-3 text-sm font-mono bg-paper border border-border rounded focus:outline-none focus:border-burgundy-700 leading-relaxed"></textarea>
+    </div>
+
+    <!-- Action Toolbar -->
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-border">
+      {% if mailto_url %}
+      <a href="{{ mailto_url }}" target="_blank" class="btn bg-white hover:bg-desk text-ink-900 border border-border text-xs font-medium px-4 py-2.5 rounded shadow-sm text-center flex items-center justify-center gap-1.5">
+        <svg class="w-4 h-4 text-burgundy-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+        <span>Open Mail Client</span>
+      </a>
+      {% endif %}
+
+      <div class="flex items-center justify-end gap-3">
+        <button type="submit" name="action" value="save_draft" class="btn bg-paper hover:bg-border text-ink-900 border border-border text-xs font-medium px-4 py-2.5 rounded">
+          Save as Draft
+        </button>
+
+        <button type="submit" name="action" value="mark_sent" class="btn bg-burgundy-700 hover:bg-burgundy-800 text-white font-medium text-xs px-5 py-2.5 rounded shadow-sm">
+          Mark Sent & Set 5-Day Follow-Up
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}

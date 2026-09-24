@@ -1,0 +1,103 @@
+/* Editorial / Research Workstation CSS Design System */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg-desk: #F5F3EF;
+  --bg-surface: #FFFFFF;
+  --bg-card: #FAF8F5;
+  --bg-elevated: #F0EDE6;
+  
+  --border-subtle: #E6E2D8;
+  --border-medium: #D1CCBF;
+  --border-dark: #A39E91;
+
+  --text-heading: #1C1917;
+  --text-body: #322F2B;
+  --text-muted: #68635B;
+  --text-faint: #948F85;
+
+  --accent-warm: #8C2A1E; /* Editorial Burgundy */
+  --accent-warm-hover: #732218;
+  --accent-subtle: #F7EBEA;
+  
+  --status-discovered: #64748B;
+  --status-researching: #D97706;
+  --status-ready: #2563EB;
+  --status-contacted: #7C3AED;
+  --status-awaiting: #0284C7;
+  --status-followup: #DC2626;
+  --status-discussion: #0D9488;
+  --status-positive: #16A34A;
+  --status-declined: #475569;
+  
+  --font-serif: 'Newsreader', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-desk);
+  color: var(--text-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, .font-serif {
+  font-family: var(--font-serif);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Touch & Interaction */
+button, a.btn, input[type="submit"] {
+  touch-action: manipulation;
+  transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1), background-color 0.15s ease, border-color 0.15s ease;
+}
+
+button:active, a.btn:active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-desk);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-medium);
+  border-radius: 3px;
+}
+
+/* Bottom Sheet & Mobile Drawer */
+.bottom-sheet {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Custom Status Badges */
+.badge-status {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.25rem 0.6rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}

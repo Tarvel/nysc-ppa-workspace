@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+
+{% block title %}{{ org.name }} — Tai's PPA Desk{% endblock %}
+
+{% block content %}
+<div class="space-y-6" x-data="{ activeTab: 'overview', noteContent: getLocalNoteDraft({{ org.pk }}) }">
+  <!-- Organization Workstation Header -->
+  <div class="bg-paper border border-border p-6 rounded-xl shadow-sm space-y-4">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="badge-status bg-burgundy-50 text-burgundy-700 border border-burgundy-700/20">
+            {{ org.status }}
+          </span>
+          <span class="text-xs font-mono text-ink-400 font-medium">Priority: {{ org.priority }}</span>
+          {% if org.location %}
+          <span class="text-xs text-ink-500 font-mono">• {{ org.location }}</span>
+          {% endif %}
+        </div>
+        <h1 class="font-serif font-bold text-3xl text-ink-900 mt-1.5">{{ org.name }}</h1>
+        <p class="text-xs text-ink-500 font-mono mt-0.5">{{ org.industry|default:"Industry Unspecified" }}</p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <a href="{% url 'outreach:prepare' org_id=org.pk %}" class="btn bg-burgundy-700 hover:bg-burgundy-800 text-white font-medium text-xs px-4 py-2 rounded shadow-sm flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          <span>Prepare Outreach</span>
+        </a>
+
+        <a href="{% url 'organizations:trigger_research' pk=org.pk %}" class="btn bg-white hover:bg-desk text-ink-900 border border-border font-medium text-xs px-3.5 py-2 rounded shadow-sm flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          <span>Research Again</span>
+        </a>
+
+        <!-- Status Change Form -->
+        <form action="{% url 'organizations:update_status' pk=org.pk %}" method="POST" class="inline-block">
+          {% csrf_token %}
+          <select name="status" onchange="this.form.submit()" class="text-xs bg-white border border-border rounded px-2.5 py-2 font-mono text-ink-900 focus:outline-none focus:border-burgundy-700 shadow-sm cursor-pointer">
+            {% for s_val, s_lbl in org.Status.choices %}
+            <option value="{{ s_val }}" {% if org.status == s_val %}selected{% endif %}>State: {{ s_lbl }}</option>
+            {% endfor %}
+          </select>
+        </form>
+      </div>
+    </div>
+
+    <!-- Links Bar -->
+    <div class="flex items-center gap-4 text-xs font-mono text-ink-500 border-t border-border pt-3 flex-wrap">
+      {% if org.website %}
+      <a href="{{ org.website }}" target="_blank" rel="noopener" class="hover:text-burgundy-700 flex items-center gap-1">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+        <span>Website</span>
+      </a>
+      {% endif %}
+      {% if org.careers_url %}
+      <a href="{{ org.careers_url }}" target="_blank" rel="noopener" class="hover:text-burgundy-700 flex items-center gap-1">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+        <span>Careers Page</span>
+      </a>
+      {% endif %}
+      {% if org.linkedin_url %}
+      <a href="{{ org.linkedin_url }}" target="_blank" rel="noopener" class="hover:text-burgundy-700 flex items-center gap-1">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/></svg>
+        <span>LinkedIn</span>
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Explainable Next Action Banner -->
+  <div class="bg-gradient-to-r from-burgundy-50 to-paper border border-burgundy-700/20 p-5 rounded-xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div class="space-y-1">
+      <div class="text-[10px] font-mono uppercase font-bold tracking-wider text-burgundy-700">Recommended Next Step</div>
+      <div class="font-serif font-bold text-lg text-ink-900">{{ next_action.action }}</div>
+      <p class="text-xs text-ink-700 italic max-w-2xl">"{{ next_action.why }}"</p>
+    </div>
+
+    <div>
+      {% if next_action.action_type == 'RESEARCH' %}
+        <a href="{% url 'organizations:trigger_research' pk=org.pk %}" class="btn bg-burgundy-700 text-white text-xs font-medium px-4 py-2 rounded shadow-sm">
+          Run Background Research
+        </a>
+      {% elif next_action.action_type == 'OUTREACH' or next_action.action_type == 'REVIEW_OUTREACH' %}
+        <a href="{% url 'outreach:prepare' org_id=org.pk %}" class="btn bg-burgundy-700 text-white text-xs font-medium px-4 py-2 rounded shadow-sm">
+          Draft Outreach Message
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Contacts Alert Banner (If duplicate contacts found) -->
+  {% if duplicates %}
+  <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl text-xs text-amber-900 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <svg class="w-5 h-5 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+      <span><strong>Possible Duplicate Contacts Detected:</strong> {{ duplicates.0.reason }}</span>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Main Workstation Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Left 2 Columns: Research Brief, Evidence & Outreach -->
+    <div class="lg:col-span-2 space-y-6">
+      <!-- AI Research Brief -->
+      <div class="bg-white border border-border rounded-xl p-6 shadow-sm space-y-4">
+        <h2 class="font-serif font-bold text-xl text-ink-900 border-b border-border pb-2 flex items-center justify-between">
+          <span>AI Research Brief & What We Know</span>
+          <span class="text-xs font-mono text-ink-400 font-normal">Evidence-Based</span>
+        </h2>
+
+        <div class="text-xs text-ink-700 leading-relaxed">
+          {{ org.description|default:"Click 'Research Again' above to run AI web research for this organization." }}
+        </div>
+
+        <!-- Evidence Items List -->
+        <div class="space-y-3 pt-2">
+          <h3 class="font-mono text-xs uppercase font-bold tracking-wider text-ink-400">Extracted Evidence Claims</h3>
+          {% for ev in evidence_items %}
+          <div class="p-3 rounded-lg border border-border bg-paper space-y-1">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-semibold text-xs text-ink-900">{{ ev.claim }}</span>
+              <span class="font-mono text-[10px] px-2 py-0.5 rounded bg-desk border border-border text-ink-700">
+                Confidence: {{ ev.confidence }}
+              </span>
+            </div>
+            {% if ev.excerpt %}
+            <p class="text-[11px] font-mono text-ink-500 italic bg-white p-2 rounded border border-border">
+              "{{ ev.excerpt }}"
+            </p>
+            {% endif %}
+          </div>
+          {% empty %}
+          <p class="text-xs text-ink-400 italic">No evidence claims logged yet.</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Verified Contacts Section -->
+      <div class="bg-white border border-border rounded-xl p-6 shadow-sm space-y-4">
+        <div class="flex items-center justify-between border-b border-border pb-2">
+          <h2 class="font-serif font-bold text-xl text-ink-900">Verified Contacts ({{ contacts.count }})</h2>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {% for c in contacts %}
+          <div class="p-4 rounded-xl border border-border bg-paper space-y-2">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <div class="font-serif font-bold text-base text-ink-900">{{ c.name }}</div>
+                <div class="text-xs text-ink-500 font-mono">{{ c.role|default:"Recruitment Contact" }}</div>
+              </div>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-white border border-border text-burgundy-700">
+                {{ c.verification_status }}
+              </span>
+            </div>
+
+            {% if c.email %}
+            <div class="text-xs font-mono text-burgundy-700 font-medium flex items-center justify-between bg-white p-2 rounded border border-border">
+              <span>{{ c.email }}</span>
+              <button onclick="navigator.clipboard.writeText('{{ c.email }}'); alert('Copied email to clipboard!');" class="text-[10px] text-ink-400 hover:text-ink-900">Copy</button>
+            </div>
+            {% endif %}
+
+            <div class="text-[10px] font-mono text-ink-400 flex items-center justify-between pt-1">
+              <span>Source: {{ c.source }}</span>
+              <a href="{% url 'contacts:delete' pk=c.pk %}" onclick="return confirm('Remove contact?')" class="text-rose-600 hover:underline">Delete</a>
+            </div>
+          </div>
+          {% empty %}
+          <p class="text-xs text-ink-400 italic col-span-full">No HR or careers contacts found yet.</p>
+          {% endfor %}
+        </div>
+
+        <!-- Add Contact Form -->
+        <details class="group pt-2">
+          <summary class="cursor-pointer text-xs font-medium text-burgundy-700 hover:underline font-mono">+ Add Contact Manually</summary>
+          <form action="{% url 'contacts:create' org_id=org.pk %}" method="POST" class="mt-3 p-4 bg-desk rounded-xl border border-border grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {% csrf_token %}
+            <input type="text" name="name" required placeholder="Full Name" class="px-3 py-1.5 text-xs bg-white border border-border rounded font-sans">
+            <input type="text" name="role" placeholder="Role (e.g. Talent Acquisition Lead)" class="px-3 py-1.5 text-xs bg-white border border-border rounded font-sans">
+            <input type="email" name="email" placeholder="Email Address" class="px-3 py-1.5 text-xs bg-white border border-border rounded font-sans">
+            <input type="text" name="linkedin_url" placeholder="LinkedIn URL" class="px-3 py-1.5 text-xs bg-white border border-border rounded font-sans">
+            <button type="submit" class="btn bg-burgundy-700 text-white text-xs font-medium py-1.5 rounded col-span-full">Save Contact</button>
+          </form>
+        </details>
+      </div>
+
+      <!-- Outreach History -->
+      <div class="bg-white border border-border rounded-xl p-6 shadow-sm space-y-4">
+        <h2 class="font-serif font-bold text-xl text-ink-900 border-b border-border pb-2">Outreach History</h2>
+        <div class="space-y-3">
+          {% for out in outreaches %}
+          <div class="p-4 rounded-xl border border-border bg-paper space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-serif font-bold text-sm text-ink-900">{{ out.subject }}</span>
+              <span class="badge-status bg-white border border-border text-ink-900">{{ out.status }}</span>
+            </div>
+            <p class="text-xs text-ink-700 font-mono line-clamp-3 bg-white p-3 rounded border border-border">
+              {{ out.message }}
+            </p>
+            <div class="text-[10px] font-mono text-ink-400 flex items-center justify-between pt-1">
+              <span>Sent: {{ out.sent_at|date:"M d, Y"|default:"Not Sent" }}</span>
+              {% if out.follow_up_at %}
+              <span class="text-rose-600 font-semibold">Follow-up: {{ out.follow_up_at|date:"M d" }}</span>
+              {% endif %}
+            </div>
+          </div>
+          {% empty %}
+          <p class="text-xs text-ink-400 italic">No outreach messages drafted or sent yet.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Quick Notes & Chronological Timeline -->
+    <div class="space-y-6">
+      <!-- Quick Notes Box (Offline-Aware) -->
+      <div class="bg-white border border-border rounded-xl p-5 shadow-sm space-y-3">
+        <h3 class="font-serif font-bold text-lg text-ink-900 border-b border-border pb-2">Quick Notes</h3>
+        
+        <form action="{% url 'organizations:add_note' pk=org.pk %}" method="POST" class="space-y-2"
+              @submit="clearLocalNoteDraft({{ org.pk }})">
+          {% csrf_token %}
+          <textarea name="content" x-model="noteContent"
+                    @input="saveLocalNoteDraft({{ org.pk }}, noteContent)"
+                    rows="3" required placeholder="Add note (e.g. 'Called HR desk today. Said to send CV to careers email...')"
+                    class="w-full px-3 py-2 text-xs bg-paper border border-border rounded font-sans focus:outline-none focus:border-burgundy-700"></textarea>
+          <button type="submit" class="btn w-full bg-burgundy-700 text-white text-xs font-medium py-2 rounded shadow-sm">
+            + Save Note
+          </button>
+        </form>
+
+        <div class="space-y-2 max-h-60 overflow-y-auto pt-2">
+          {% for note in notes %}
+          <div class="p-3 rounded-lg border border-border bg-paper text-xs text-ink-700">
+            <p>{{ note.content }}</p>
+            <div class="text-[10px] font-mono text-ink-400 mt-1">{{ note.created_at|date:"M d, H:i" }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Chronological Timeline -->
+      <div class="bg-white border border-border rounded-xl p-5 shadow-sm space-y-3">
+        <h3 class="font-serif font-bold text-lg text-ink-900 border-b border-border pb-2">Activity Timeline</h3>
+        <div class="relative border-l-2 border-border pl-4 space-y-4 my-2">
+          {% for evt in timeline_events %}
+          <div class="relative group">
+            <div class="absolute -left-[21px] top-1.5 w-2.5 h-2.5 rounded-full bg-burgundy-700 border-2 border-white"></div>
+            <div class="text-xs font-bold text-ink-900 font-mono">{{ evt.event_type }}</div>
+            <p class="text-xs text-ink-700 mt-0.5">{{ evt.description }}</p>
+            <div class="text-[10px] font-mono text-ink-400 mt-0.5">{{ evt.created_at|date:"M d, H:i" }}</div>
+          </div>
+          {% empty %}
+          <p class="text-xs text-ink-400 italic">No timeline events recorded.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Login — Tai's PPA Desk{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto mt-12 bg-paper border border-border p-8 rounded-xl shadow-lg">
+  <div class="text-center mb-6">
+    <div class="w-12 h-12 rounded bg-burgundy-700 text-white font-serif font-bold text-2xl mx-auto flex items-center justify-center shadow-md mb-3">
+      T
+    </div>
+    <h2 class="font-serif font-bold text-2xl text-ink-900">Tai's PPA Workspace</h2>
+    <p class="text-xs text-ink-500 font-mono mt-1">Private AI-Powered NYSC Research Desk</p>
+  </div>
+
+  <form method="POST" class="flex flex-col gap-4">
+    {% csrf_token %}
+    <div>
+      <label class="block text-xs font-mono font-medium text-ink-700 uppercase tracking-wider mb-1">Username</label>
+      <input type="text" name="username" required value="tai" class="w-full px-3 py-2 text-sm bg-white border border-border rounded shadow-sm focus:outline-none focus:border-burgundy-700 font-sans">
+    </div>
+
+    <div>
+      <label class="block text-xs font-mono font-medium text-ink-700 uppercase tracking-wider mb-1">Password</label>
+      <input type="password" name="password" required value="taipassword" class="w-full px-3 py-2 text-sm bg-white border border-border rounded shadow-sm focus:outline-none focus:border-burgundy-700 font-sans">
+    </div>
+
+    <button type="submit" class="btn w-full bg-burgundy-700 hover:bg-burgundy-800 text-white font-medium text-sm py-2.5 rounded shadow-sm mt-2">
+      Access Workspace
+    </button>
+  </form>
+</div>
+{% endblock %}

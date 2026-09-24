@@ -1,0 +1,54 @@
+<div x-show="quickAddOpen"
+     x-transition:enter="ease-out duration-200"
+     x-transition:enter-start="opacity-0 translate-y-4"
+     x-transition:enter-end="opacity-100 translate-y-0"
+     x-transition:leave="ease-in duration-150"
+     x-transition:leave-start="opacity-100 translate-y-0"
+     x-transition:leave-end="opacity-0 translate-y-4"
+     class="fixed inset-0 z-50 overflow-y-auto p-4 sm:p-6 bg-ink-900/60 backdrop-blur-sm flex justify-center items-end sm:items-center"
+     style="display: none;"
+     @click.self="quickAddOpen = false">
+
+  <div class="bg-paper border border-border w-full max-w-lg rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden bottom-sheet">
+    <div class="px-6 py-4 border-b border-border flex items-center justify-between bg-white">
+      <div>
+        <h3 class="font-serif font-bold text-lg text-ink-900">Quick Capture Organization</h3>
+        <p class="text-xs text-ink-500">Paste details to instantly track and start research.</p>
+      </div>
+      <button @click="quickAddOpen = false" class="text-ink-400 hover:text-ink-900 text-xl font-bold">&times;</button>
+    </div>
+
+    <form action="{% url 'organizations:quick_add' %}" method="POST" class="p-6 flex flex-col gap-4">
+      {% csrf_token %}
+      <div>
+        <label class="block text-xs font-mono font-medium text-ink-700 uppercase tracking-wider mb-1">Company Name <span class="text-burgundy-700">*</span></label>
+        <input type="text" name="name" required placeholder="e.g. GTBank, MainOne, Flutterwave"
+               class="w-full px-3 py-2 text-sm bg-white border border-border rounded shadow-sm focus:outline-none focus:border-burgundy-700 font-sans">
+      </div>
+
+      <div>
+        <label class="block text-xs font-mono font-medium text-ink-700 uppercase tracking-wider mb-1">Website URL / Careers Link</label>
+        <input type="url" name="website" placeholder="https://www.company.com"
+               class="w-full px-3 py-2 text-sm bg-white border border-border rounded shadow-sm focus:outline-none focus:border-burgundy-700 font-sans">
+      </div>
+
+      <div>
+        <label class="block text-xs font-mono font-medium text-ink-700 uppercase tracking-wider mb-1">Location / State</label>
+        <input type="text" name="location" value="Abuja, Nigeria" placeholder="e.g. Abuja, Kwara, Lagos"
+               class="w-full px-3 py-2 text-sm bg-white border border-border rounded shadow-sm focus:outline-none focus:border-burgundy-700 font-sans">
+      </div>
+
+      <div class="flex items-center gap-2 pt-1">
+        <input type="checkbox" id="auto_research" name="auto_research" value="true" checked class="rounded text-burgundy-700 focus:ring-burgundy-700 border-border">
+        <label for="auto_research" class="text-xs text-ink-700 font-medium">Start background AI research automatically</label>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-border">
+        <button type="button" @click="quickAddOpen = false" class="px-4 py-2 text-xs font-medium text-ink-500 hover:text-ink-900">Cancel</button>
+        <button type="submit" class="btn bg-burgundy-700 hover:bg-burgundy-800 text-white text-xs font-medium px-5 py-2 rounded shadow-sm">
+          Save & Research Organization
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

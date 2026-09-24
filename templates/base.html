@@ -1,0 +1,91 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>{% block title %}Tai's PPA Workspace{% endblock %}</title>
+
+  <!-- PWA Manifest & Meta -->
+  <link rel="manifest" href="{% static 'manifest.json' %}">
+  <meta name="theme-color" content="#8C2A1E">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            paper: '#FDFBF7',
+            desk: '#F5F3EF',
+            border: '#E6E2D8',
+            burgundy: {
+              700: '#8C2A1E',
+              800: '#732218',
+              50: '#F7EBEA',
+            },
+            ink: {
+              900: '#1C1917',
+              700: '#322F2B',
+              500: '#68635B',
+              400: '#948F85',
+            }
+          },
+          fontFamily: {
+            serif: ['Newsreader', 'Georgia', 'serif'],
+            sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Custom Editorial CSS -->
+  <link rel="stylesheet" href="{% static 'css/editorial.css' %}">
+
+  <!-- HTMX & Alpine.js -->
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-desk text-ink-700 h-full flex flex-col antialiased selection:bg-burgundy-50 selection:text-burgundy-700"
+      x-data="{ commandPaletteOpen: false, quickAddOpen: false }"
+      @keydown.window.cmd.k.prevent="commandPaletteOpen = true"
+      @keydown.window.ctrl.k.prevent="commandPaletteOpen = true">
+
+  <!-- Desktop Header Navbar -->
+  {% include "components/navbar.html" %}
+
+  <!-- Messages Toast -->
+  {% if messages %}
+  <div class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full px-4 pointer-events-none">
+    {% for message in messages %}
+    <div class="pointer-events-auto p-4 rounded-lg shadow-md border text-sm flex items-center justify-between transition-all bg-white border-border text-ink-900">
+      <span>{{ message }}</span>
+      <button onclick="this.parentElement.remove()" class="text-ink-400 hover:text-ink-700 ml-2">&times;</button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Main Content Area -->
+  <main class="flex-1 pb-24 md:pb-12 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Mobile Bottom Navigation (Visible on phone screens) -->
+  {% include "components/bottom_nav.html" %}
+
+  <!-- Command Palette Modal -->
+  {% include "components/command_palette.html" %}
+
+  <!-- Quick Add / Quick Capture Drawer Modal -->
+  {% include "components/quick_add_modal.html" %}
+
+  <!-- JS App Core -->
+  <script src="{% static 'js/app.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

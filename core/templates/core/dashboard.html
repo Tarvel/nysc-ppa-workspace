@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Today — Tai's PPA Desk{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <!-- Today Header -->
+  <div class="bg-paper border border-border p-6 rounded-xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span class="text-xs font-mono text-ink-500 uppercase tracking-wider">Research Desk Active</span>
+      </div>
+      <h1 class="font-serif font-bold text-2xl sm:text-3xl text-ink-900 mt-1">Today's PPA Action Desk</h1>
+      <p class="text-xs text-ink-500 font-sans mt-0.5">What needs your decision, research, or outreach right now.</p>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button @click="quickAddOpen = true" class="btn bg-burgundy-700 hover:bg-burgundy-800 text-white font-medium text-xs px-4 py-2 rounded shadow-sm flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        <span>Quick Capture Org</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Metric Summary Cards -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+    <a href="{% url 'outreach:list' %}?status=Follow-up Due" class="bg-white border border-border p-4 rounded-xl shadow-sm hover:border-burgundy-700 transition">
+      <div class="text-[10px] font-mono font-semibold text-rose-600 uppercase tracking-wider">Follow-ups Due</div>
+      <div class="font-serif font-bold text-3xl text-ink-900 mt-1">{{ followups_due_count }}</div>
+      <div class="text-[11px] text-ink-400 mt-0.5">Reminders pending</div>
+    </a>
+
+    <a href="{% url 'organizations:list' %}?status=Discovered" class="bg-white border border-border p-4 rounded-xl shadow-sm hover:border-burgundy-700 transition">
+      <div class="text-[10px] font-mono font-semibold text-amber-600 uppercase tracking-wider">Needs Research</div>
+      <div class="font-serif font-bold text-3xl text-ink-900 mt-1">{{ needs_research_count }}</div>
+      <div class="text-[11px] text-ink-400 mt-0.5">Queued organizations</div>
+    </a>
+
+    <a href="{% url 'organizations:list' %}?status=Ready to Contact" class="bg-white border border-border p-4 rounded-xl shadow-sm hover:border-burgundy-700 transition">
+      <div class="text-[10px] font-mono font-semibold text-blue-600 uppercase tracking-wider">Ready for Outreach</div>
+      <div class="font-serif font-bold text-3xl text-ink-900 mt-1">{{ ready_for_contact_count }}</div>
+      <div class="text-[11px] text-ink-400 mt-0.5">Research complete</div>
+    </a>
+
+    <a href="{% url 'organizations:list' %}?status=Contacted" class="bg-white border border-border p-4 rounded-xl shadow-sm hover:border-burgundy-700 transition">
+      <div class="text-[10px] font-mono font-semibold text-purple-600 uppercase tracking-wider">Contacted / Awaiting</div>
+      <div class="font-serif font-bold text-3xl text-ink-900 mt-1">{{ contacted_count }}</div>
+      <div class="text-[11px] text-ink-400 mt-0.5">Outreach in progress</div>
+    </a>
+  </div>
+
+  <!-- Urgent Action Queue -->
+  <div class="bg-white border border-border rounded-xl shadow-sm overflow-hidden">
+    <div class="px-6 py-4 border-b border-border bg-paper flex items-center justify-between">
+      <div>
+        <h2 class="font-serif font-bold text-lg text-ink-900">Recommended Next Actions</h2>
+        <p class="text-xs text-ink-500">AI-suggested next steps based on current evidence and contacts.</p>
+      </div>
+      <a href="{% url 'organizations:list' %}" class="text-xs font-medium text-burgundy-700 hover:underline">View All Orgs &rarr;</a>
+    </div>
+
+    <div class="divide-y divide-border">
+      {% for item in org_next_actions %}
+      <div class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-desk/50 transition">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2">
+            <a href="{% url 'organizations:detail' pk=item.org.pk %}" class="font-serif font-bold text-base text-ink-900 hover:text-burgundy-700 transition">
+              {{ item.org.name }}
+            </a>
+            <span class="badge-status bg-desk border border-border text-ink-700">
+              {{ item.org.status }}
+            </span>
+            {% if item.org.location %}
+            <span class="text-xs text-ink-400 font-mono">• {{ item.org.location }}</span>
+            {% endif %}
+          </div>
+          <div class="text-xs text-ink-700 font-medium flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-burgundy-700"></span>
+            <span>Next: {{ item.next_action.action }}</span>
+          </div>
+          <p class="text-xs text-ink-500 italic max-w-2xl">
+            "{{ item.next_action.why }}"
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2 shrink-0">
+          {% if item.next_action.action_type == 'RESEARCH' %}
+            <a href="{% url 'organizations:trigger_research' pk=item.org.pk %}" class="btn bg-burgundy-700 text-white text-xs font-medium px-3.5 py-1.5 rounded shadow-sm">
+              Start Research
+            </a>
+          {% elif item.next_action.action_type == 'OUTREACH' or item.next_action.action_type == 'REVIEW_OUTREACH' %}
+            <a href="{% url 'outreach:prepare' org_id=item.org.pk %}" class="btn bg-burgundy-700 text-white text-xs font-medium px-3.5 py-1.5 rounded shadow-sm">
+              Draft Outreach
+            </a>
+          {% else %}
+            <a href="{% url 'organizations:detail' pk=item.org.pk %}" class="btn bg-paper hover:bg-border text-ink-900 border border-border text-xs font-medium px-3.5 py-1.5 rounded">
+              View Workspace
+            </a>
+          {% endif %}
+        </div>
+      </div>
+      {% empty %}
+      <div class="p-8 text-center text-ink-500 text-sm">
+        No organizations in queue. <button @click="quickAddOpen = true" class="text-burgundy-700 font-medium underline">Quick Capture an organization</button> to start!
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Recently Found Organizations -->
+  <div class="bg-paper border border-border rounded-xl p-6 shadow-sm">
+    <h3 class="font-serif font-bold text-lg text-ink-900 mb-3">Recently Found Organizations</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+      {% for org in recently_found %}
+      <a href="{% url 'organizations:detail' pk=org.pk %}" class="p-3.5 rounded-lg border border-border bg-white hover:border-burgundy-700 transition flex flex-col justify-between">
+        <div>
+          <div class="font-serif font-bold text-sm text-ink-900">{{ org.name }}</div>
+          <div class="text-[11px] text-ink-500 font-mono mt-0.5">{{ org.industry|default:"General Tech / Services" }}</div>
+        </div>
+        <div class="flex items-center justify-between mt-3 text-[10px] font-mono text-ink-400 border-t border-border pt-2">
+          <span>{{ org.status }}</span>
+          <span>{{ org.created_at|date:"M d" }}</span>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
