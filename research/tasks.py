@@ -83,11 +83,21 @@ def run_organization_research_task(organization_id: int, job_id: int = None):
     return True
 
 def trigger_organization_research(organization: Organization):
-    """Triggers research task asynchronously if Celery is running, else synchronously."""
+    """Triggers research task asynchronously if Celery worker is running, else synchronously."""
     job = ResearchJob.objects.create(organization=organization, status=ResearchJob.Status.QUEUED)
-    try:
-        run_organization_research_task.delay(organization.id, job.id)
-    except Exception as e:
-        print(f"Celery dispatch failed: {e}. Executing synchronously...")
-        run_organization_research_task(organization.id, job.id)
+
+    # On single-dyno deployments (e.g. Koyeb free tier) there is no
+    # separate Celery worker.  Skip the broker round-trip and run inline.
+    use_celery = os.getenv('CELERY_WORKER_RUNNING', '').lower() in ('1', 'true', 'yes')
+
+    if use_celery:
+        try:
+            run_organization_research_task.delay(organization.id, job.id)
+            return job
+        except Exception as e:
+            print(f"Celery dispatch failed: {e}. Executing synchronously...")
+
+    # Synchronous fallback
+    run_organization_research_task(organization.id, job.id)
     return job
+
