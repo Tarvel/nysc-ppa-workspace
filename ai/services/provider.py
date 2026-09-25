@@ -13,18 +13,30 @@ class GeminiAIProvider:
         self.api_key = api_key
 
     def generate_text(self, prompt: str) -> str:
-        try:
-            from google import genai
-            client = genai.Client(api_key=self.api_key)
-            model_name = os.getenv("GEMINI_MODEL_NAME", "gemini-3.8-flash")
-            response = client.models.generate_content(
-                model=model_name,
-                contents=prompt
-            )
-            return response.text
-        except Exception as e:
-            print(f"Gemini API Error: {e}")
-            return f"AI Generation Failed: {e}"
+        import time
+        from google import genai
+        client = genai.Client(api_key=self.api_key)
+        model_name = os.getenv("GEMINI_MODEL_NAME", "gemini-3.8-flash")
+
+        retries = 3
+        for attempt in range(retries):
+            try:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt
+                )
+                return response.text
+            except Exception as e:
+                error_str = str(e)
+                # Retry on transient errors (503, 429, 500)
+                is_transient = any(code in error_str for code in ('503', '429', '500', 'UNAVAILABLE', 'RESOURCE_EXHAUSTED'))
+                if is_transient and attempt < retries - 1:
+                    wait = (attempt + 1) * 3  # 3s, 6s
+                    print(f"Gemini API transient error (attempt {attempt+1}/{retries}), retrying in {wait}s: {e}")
+                    time.sleep(wait)
+                    continue
+                print(f"Gemini API Error: {e}")
+                return f"AI Generation Failed: {e}"
 
     def generate_json(self, prompt: str, schema: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         full_prompt = f"{prompt}\n\nIMPORTANT: Respond with VALID JSON ONLY. Do not include markdown formatting or backticks around the JSON."
