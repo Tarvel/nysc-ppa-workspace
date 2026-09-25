@@ -5,6 +5,8 @@ from organizations.models import Organization
 from research.models import Source, Evidence, ResearchJob
 from research.services.fetcher import WebPageFetcher
 from research.services.search_provider import get_search_provider
+from contacts.services.contact_provider import get_contact_provider, extract_domain
+from contacts.models import Contact
 from ai.services.brief_generator import BriefGenerator
 
 @shared_task
@@ -50,7 +52,7 @@ def run_organization_research_task(organization_id: int, job_id: int = None):
             sources_fetched.append(src)
 
     # 2. Search web for company + careers + NYSC
-    job.progress = 50
+    job.progress = 40
     job.save()
     search_provider = get_search_provider()
     search_results = search_provider.search(f"{organization.name} careers NYSC Abuja Nigeria", num_results=3)
@@ -69,7 +71,40 @@ def run_organization_research_task(organization_id: int, job_id: int = None):
         )
         sources_fetched.append(src)
 
-    # 3. Process research via AI Brief Generator
+    # 3. Hunter.io HR contact discovery
+    job.progress = 60
+    job.save()
+    domain = extract_domain(organization.website) if organization.website else ""
+    if domain:
+        try:
+            contact_provider = get_contact_provider()
+            discovered = contact_provider.find_contacts(domain)
+            contacts_created = 0
+            for dc in discovered:
+                _, created = Contact.objects.get_or_create(
+                    organization=organization,
+                    email=dc.email,
+                    defaults={
+                        'name': dc.name,
+                        'role': dc.role,
+                        'phone': dc.phone,
+                        'linkedin_url': dc.linkedin_url,
+                        'confidence': dc.confidence,
+                        'verification_status': dc.verification_status,
+                        'source': dc.source,
+                    }
+                )
+                if created:
+                    contacts_created += 1
+            if contacts_created:
+                organization.log_event(
+                    "HR_CONTACTS_DISCOVERED",
+                    f"Found {contacts_created} HR contact(s) via {dc.source} for {domain}"
+                )
+        except Exception as e:
+            print(f"Contact discovery error for {domain}: {e}")
+
+    # 4. Process research via AI Brief Generator
     job.progress = 80
     job.save()
     
