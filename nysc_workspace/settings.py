@@ -111,19 +111,23 @@ LOGIN_REDIRECT_URL = 'core:dashboard'
 LOGOUT_REDIRECT_URL = 'accounts:login'
 
 # Celery Configuration
-CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
-CELERY_RESULT_BACKEND = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+_raw_broker = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+_raw_backend = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+
+# Celery/kombu doesn't ship a 'rediss' transport module.
+# Convert rediss:// → redis:// and enable TLS via BROKER_USE_SSL instead.
+if _raw_broker.startswith('rediss://'):
+    import ssl
+    CELERY_BROKER_URL = _raw_broker.replace('rediss://', 'redis://', 1)
+    CELERY_RESULT_BACKEND = _raw_backend.replace('rediss://', 'redis://', 1)
+    CELERY_BROKER_USE_SSL = {'ssl_cert_reqs': ssl.CERT_NONE}
+    CELERY_REDIS_BACKEND_USE_SSL = {'ssl_cert_reqs': ssl.CERT_NONE}
+else:
+    CELERY_BROKER_URL = _raw_broker
+    CELERY_RESULT_BACKEND = _raw_backend
+
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
-
-if CELERY_BROKER_URL.startswith('rediss://'):
-    import ssl
-    CELERY_BROKER_USE_SSL = {
-        'ssl_cert_reqs': ssl.CERT_NONE
-    }
-    CELERY_REDIS_BACKEND_USE_SSL = {
-        'ssl_cert_reqs': ssl.CERT_NONE
-    }
 

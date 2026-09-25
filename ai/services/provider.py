@@ -16,7 +16,7 @@ class GeminiAIProvider:
         try:
             from google import genai
             client = genai.Client(api_key=self.api_key)
-            model_name = os.getenv("GEMINI_MODEL_NAME", "gemini-1.5-flash")
+            model_name = os.getenv("GEMINI_MODEL_NAME", "gemini-2.0-flash")
             response = client.models.generate_content(
                 model=model_name,
                 contents=prompt
